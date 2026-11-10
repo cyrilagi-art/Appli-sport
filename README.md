@@ -4,9 +4,9 @@ Appli web d'entraînement au poids du corps, **privée et non commerciale**, pen
 
 ## Ce que fait l'appli
 
-- Séances de 10 à 45 minutes, trois niveaux, zones travaillées au choix (corps entier, haut, bas, abdos, cardio).
+- Séances de 10 à 45 minutes, trois niveaux, un ou deux types d'exercices au choix (corps entier, haut, bas, abdos, cardio).
 - Gainages et étirements issus d'un livre d'ostéopathie, **redessinés et reformulés** (aucune illustration ni aucun texte du livre n'est reproduit).
-- Douleurs ou gênes (cervicales, épaules, poignets, lombaires, genoux, tendon d'Achille) : les exercices concernés sont écartés. Un tableau de cohérence dans l'appli montre ce qui est écarté et pourquoi. Ce n'est pas un avis médical.
+- Douleurs ou gênes (cervicales, épaules, poignets, lombaires, genoux, tendon d'Achille) : les exercices concernés sont écartés. Ce n'est pas un avis médical.
 - Un profil par membre de la famille (niveau et douleurs mémorisés). Calories estimées pour les adultes seulement (valeurs MET du Compendium of Physical Activities), jamais pour les moins de 18 ans.
 - Variété : chaque profil retient ses 5 dernières séances pour ne pas reproposer toujours les mêmes exercices.
 - Repos entre exercices au choix, ambiances sonores, voix du coach.

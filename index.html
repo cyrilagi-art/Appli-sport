@@ -152,20 +152,19 @@ input[type=range]{width:100%;accent-color:var(--effort);min-height:32px}
   </fieldset>
   <fieldset class="grp"><legend>Durée</legend><div class="chips" id="c-dur"></div></fieldset>
   <fieldset class="grp"><legend>Niveau</legend><div class="chips" id="c-lvl"></div><p class="hint" id="h-lvl"></p></fieldset>
-  <fieldset class="grp"><legend>Zone travaillée</legend><div class="chips" id="c-focus"></div></fieldset>
+  <fieldset class="grp"><legend>Exercices</legend><div class="chips" id="c-focus"></div><p class="hint">Choisis un ou deux types, par exemple Cardio et Abdos.</p></fieldset>
   <fieldset class="grp"><legend>Douleurs ou gênes</legend>
     <div id="c-body"></div>
     <div class="chips pzs" id="c-pn"></div>
     <p class="hint">Touche une zone : une fois pour une gêne (on retire les exercices qui la sollicitent fortement), deux fois pour une douleur (on retire tous ceux qui la sollicitent). Ce n’est pas un avis médical : si la douleur dure, consulte un professionnel.</p>
     <p class="hint" id="h-adapt"></p></fieldset>
-  <details class="grp tdet"><summary>Tableau de cohérence : exercices écartés selon les douleurs</summary><div id="c-tbl"></div></details>
   <fieldset class="grp"><legend>Repos entre les exercices</legend><div class="chips" id="c-rs"></div><p class="hint" id="h-rs"></p></fieldset>
   <fieldset class="grp"><legend>Échauffement</legend><div class="chips" id="c-warm"></div></fieldset>
   <fieldset class="grp"><legend>Étirements en fin de séance</legend><div class="chips" id="c-st"></div><p class="hint" id="h-st"></p></fieldset>
   <fieldset class="grp"><legend>Ambiance sonore</legend><div class="chips" id="c-mu"></div><p class="hint">Un rythme par type d’exercice : cardio rapide, force, tenues lentes, et sons de nature pour les étirements. Tout est fabriqué par la page.</p></fieldset>
   <fieldset class="grp"><legend>Voix du coach</legend><div class="chips" id="c-vx"></div><p class="hint" id="h-vx"></p></fieldset>
   <fieldset class="grp"><legend>Sons de nature pour les étirements</legend><div class="chips" id="c-nat"></div></fieldset>
-  <fieldset class="grp"><legend>Volume <output id="vol-o" style="letter-spacing:0;text-transform:none;font-size:14px;color:var(--ink)"></output></legend><input id="vol" type="range" min="0" max="100" step="1" value="80" aria-label="Volume"><div class="chips" style="margin-top:8px"><button type="button" class="chip" id="b-test">Tester le son et la voix</button></div><p class="hint">Sur iPhone, désactive le mode silencieux (interrupteur sur le côté), sinon la page reste muette.</p></fieldset>
+  <fieldset class="grp"><legend>Volume <output id="vol-o" style="letter-spacing:0;text-transform:none;font-size:14px;color:var(--ink)"></output></legend><input id="vol" type="range" min="0" max="100" step="1" value="80" aria-label="Volume"><p class="hint">Sur iPhone, désactive le mode silencieux (interrupteur sur le côté), sinon la page reste muette.</p></fieldset>
   <div class="plan" id="plan"></div>
   <p class="hint kc" id="h-kcal"></p>
   <div class="rowb"><h2 class="sub">Au programme</h2><button class="chip" id="b-shuf" type="button">Autres exercices</button></div>
@@ -802,9 +801,14 @@ const STZ={full:["ep","dos","jb"],haut:["ep","dos"],bas:["jb","dos"],abdos:["dos
 const STP={ep:["ecarter","plafond","coude"],dos:["golfeur","genoux","cravate","combine"],jb:["turques","pointes","talonfesse"]};
 const STN=[[0,"Sans"],[1,"Court, 5 min"],[2,"Complet, 10 min"]];
 const DURS=[10,15,20,30,45];
-let CFG={dur:20,lvl:1,focus:"full",warm:1,rs:1,st:1,mu:1,vx:1,nat:"ruisseau",vol:80,pn:{}};
+/* "Exercices" : un ou deux types au choix (corps entier est exclusif) */
+const FOCS=c=>[].concat(c.focus).filter(f=>POOL[f]).slice(0,2);
+const poolOf=c=>{const f=FOCS(c);if(f.length<2)return POOL[f[0]||"full"];const a=POOL[f[0]],b=POOL[f[1]],o=[];
+  for(let i=0;i<Math.max(a.length,b.length);i++){if(a[i]&&!o.includes(a[i]))o.push(a[i]);if(b[i]&&!o.includes(b[i]))o.push(b[i])}return o};
+const zonesOf=c=>[...new Set(FOCS(c).flatMap(f=>STZ[f]))];
+let CFG={dur:20,lvl:1,focus:["full"],warm:1,rs:1,st:1,mu:1,vx:1,nat:"ruisseau",vol:80,pn:{}};
 try{const s=JSON.parse(localStorage.getItem("spc-cfg")||"null");
-  if(s&&DURS.includes(s.dur)&&LV[s.lvl]&&POOL[s.focus])CFG={dur:s.dur,lvl:s.lvl,focus:s.focus,warm:s.warm?1:0,rs:s.rs===0?0:1,st:[0,1,2].includes(s.st)?s.st:1,mu:s.mu===0?0:1,vx:s.vx===0?0:1,nat:["ruisseau","pluie","foret"].includes(s.nat)?s.nat:"ruisseau",vol:s.vol>=0&&s.vol<=100?+s.vol:80,pn:Object.fromEntries(ZONES.map(z=>[z.k,s.pn&&[1,2].includes(s.pn[z.k])?s.pn[z.k]:0]).filter(x=>x[1]))}}catch(e){}
+  if(s&&DURS.includes(s.dur)&&LV[s.lvl]&&FOCS(s).length)CFG={dur:s.dur,lvl:s.lvl,focus:FOCS(s).includes("full")?["full"]:FOCS(s),warm:s.warm?1:0,rs:s.rs===0?0:1,st:[0,1,2].includes(s.st)?s.st:1,mu:s.mu===0?0:1,vx:s.vx===0?0:1,nat:["ruisseau","pluie","foret"].includes(s.nat)?s.nat:"ruisseau",vol:s.vol>=0&&s.vol<=100?+s.vol:80,pn:Object.fromEntries(ZONES.map(z=>[z.k,s.pn&&[1,2].includes(s.pn[z.k])?s.pn[z.k]:0]).filter(x=>x[1]))}}catch(e){}
 
 const okEx=(id,pn)=>{const t=EXM[id].pn;return ZONES.every(z=>{const L=(pn||{})[z.k]||0,l=t[z.k]||0;return !(L&&l&&l+L>=3)})};
 const ALLP=[...new Set(Object.values(POOL).flat())];
@@ -821,7 +825,7 @@ function vctx(seed){
 }
 function stretchPlan(c,X){
   if(!c.st)return{ids:[],total:0};
-  const cap=Math.min(c.st===1?300:600,Math.floor(c.dur*60*.4)),zs=STZ[c.focus],q=zs.map(z=>STP[z].filter(id=>okEx(id,c.pn)).sort((a,b)=>X.sc(b)-X.sc(a))),ids=[];
+  const cap=Math.min(c.st===1?300:600,Math.floor(c.dur*60*.4)),zs=zonesOf(c),q=zs.map(z=>STP[z].filter(id=>okEx(id,c.pn)).sort((a,b)=>X.sc(b)-X.sc(a))),ids=[];
   let tot=10,more=true;
   while(more){more=false;
     for(const l of q){while(l.length){const id=l.shift(),d=EXM[id].d+5;if(tot+d<=cap){ids.push(id);tot+=d;more=true;break}}}}
@@ -832,7 +836,7 @@ function build(c,seed){
   const lv=LV[c.lvl],steps=[],X=vctx(seed===undefined?SEED:seed);
   const lvOk=id=>c.lvl>=EXM[id].lv[0]&&c.lvl<=EXM[id].lv[1];
   const RS=c.rs===0?0:lv.r;
-  const base=POOL[c.focus].filter(lvOk);
+  const base=poolOf(c).filter(lvOk),fs=FOCS(c);
   let ids=base.filter(id=>okEx(id,c.pn)),filled=false;
   const dropped=base.filter(id=>!ids.includes(id));
   if(ids.length<4){for(const id of ALLP)if(ids.length<4&&!ids.includes(id)&&lvOk(id)&&okEx(id,c.pn)){ids.push(id);filled=true}}
@@ -843,8 +847,8 @@ function build(c,seed){
   const cl=Math.min(c.dur<=12?4:c.dur<=25?6:8,ids.length);
   if(ids.length>cl){
     const cat=id=>{const hl=EXM[id].hl;return hl.includes("arms")?"h":hl.includes("legs")?"b":"c"};
-    const wp=id=>X.sc(id)-(warm.includes(id)?2.5:0),srt=[...ids].sort((a,b)=>wp(b)-wp(a)),cnt={},sel=[],cap=c.focus==="full"?Math.ceil(cl/2):cl;
-    for(const id of srt){if(sel.length>=cl)break;const k=cat(id);if((cnt[k]||0)<cap){sel.push(id);cnt[k]=(cnt[k]||0)+1}}
+    const wp=id=>X.sc(id)-(warm.includes(id)?2.5:0),srt=[...ids].sort((a,b)=>wp(b)-wp(a)),cnt={},sel=[],cap=fs.length>1||fs[0]==="full"?Math.ceil(cl/2):cl,gk=id=>fs.length>1?fs.findIndex(f=>POOL[f].includes(id)):cat(id);
+    for(const id of srt){if(sel.length>=cl)break;const k=gk(id);if((cnt[k]||0)<cap){sel.push(id);cnt[k]=(cnt[k]||0)+1}}
     for(const id of srt){if(sel.length>=cl)break;if(!sel.includes(id))sel.push(id)}
     ids=ids.filter(id=>sel.includes(id));
   }
@@ -950,24 +954,13 @@ function renderPain(){
     b.innerHTML=`${z.n}<small>${PLV[L]}</small>`;b.onclick=()=>cycZone(z.k);box.appendChild(b)});
 }
 
-function renderTable(){
-  const grp=e=>e.stretch?2:e.id.startsWith("g_")?1:0,GN=["Renforcement","Gainage du livre","Étirements du livre"];
-  const eff=ZONES.map(z=>[z, EX.filter(e=>(e.pn[z.k]||0)===2).map(e=>e.n), EX.filter(e=>(e.pn[z.k]||0)===1).map(e=>e.n)]);
-  let h=`<p class="hint">Règle : une <b>gêne</b> écarte les exercices à forte sollicitation de la zone (<span class="tb t2">●●</span>). Une <b>douleur</b> écarte aussi ceux à sollicitation modérée (<span class="tb t1">●</span>). Case vide = zone non sollicitée. Les lignes barrées sont écartées avec tes réglages actuels.</p>`;
-  h+=`<h3 class="tt">Par zone</h3><dl class="zl">`;
-  for(const [z,a,b] of eff){h+=`<dt>${z.n}</dt><dd><b>Dès la gêne :</b> ${a.length?a.join(", "):"aucun"}.<br><b>En plus si douleur :</b> ${b.length?b.join(", "):"aucun"}.</dd>`}
-  h+=`</dl><h3 class="tt">Par exercice</h3><div class="tw"><table class="tbl"><thead><tr><th>Exercice</th>${ZONES.map(z=>`<th title="${z.n}">${z.n.replace("Tendon d’Achille","Achille").replace("Cervicales","Cerv.").replace("Épaules","Épau.").replace("Poignets","Poig.").replace("Lombaires","Lomb.").replace("Genoux","Genx")}</th>`).join("")}</tr></thead><tbody>`;
-  [0,1,2].forEach(g=>{h+=`<tr class="gh"><td colspan="7">${GN[g]}</td></tr>`;
-    EX.filter(e=>grp(e)===g).forEach(e=>{const out=!okEx(e.id,CFG.pn);
-      h+=`<tr class="${out?"out":""}"><th scope="row">${e.n}</th>${ZONES.map(z=>{const l=e.pn[z.k]||0;return `<td>${l?`<span class="tb t${l}" aria-label="${l===2?"écarté dès la gêne":"écarté si douleur"}">${l===2?"●●":"●"}</span>`:""}</td>`}).join("")}</tr>`})});
-  h+=`</tbody></table></div><p class="hint">Les étirements du tendon d’Achille (toilettes turques, sur la pointe des pieds) ne sont jamais écartés par l’Achille : ils servent justement à l’étirer.</p>`;
-  $("c-tbl").innerHTML=h;
-}
 function renderSetup(keep){
   const lv0=LV[CFG.lvl];
   chips("c-dur",DURS.map(d=>[d,d+" min"]),v=>v===CFG.dur,v=>CFG.dur=v);
   chips("c-lvl",LV.map((l,i)=>[i,l.n]),v=>v===CFG.lvl,v=>CFG.lvl=v);
-  chips("c-focus",FOC,v=>v===CFG.focus,v=>CFG.focus=v);
+  chips("c-focus",FOC,v=>FOCS(CFG).includes(v),v=>{const cur=FOCS(CFG);let n;
+    if(v==="full")n=["full"];else{n=cur.filter(x=>x!=="full");if(n.includes(v)){if(n.length>1)n=n.filter(x=>x!==v)}else{n.push(v);if(n.length>2)n.shift()}}
+    CFG.focus=n});
   chips("c-rs",[[1,"Avec repos"],[0,"Sans repos"]],v=>v===CFG.rs,v=>CFG.rs=v);
   $("h-rs").textContent=CFG.rs?"Repos de "+lv0.r+" s entre les exercices (selon le niveau).":"Les exercices s’enchaînent sans pause : le coach annonce le suivant pendant l’effort.";
   chips("c-warm",[[1,"Avec, 2 min"],[0,"Sans"]],v=>v===CFG.warm,v=>CFG.warm=v);
@@ -979,7 +972,7 @@ function renderSetup(keep){
   $("h-vx").textContent=SND.hasVoice()?"La voix annonce chaque exercice et résume la consigne. C’est la voix de ton téléphone.":"La voix n’est pas disponible sur cet appareil ou ce navigateur.";
   $("h-lvl").textContent=LV[CFG.lvl].d;
   if(!keep)renderProf();
-  renderPain();renderTable();
+  renderPain();
   const b=build(CFG),lv=LV[CFG.lvl],anyPn=Object.keys(CFG.pn).length>0;
   $("b-start").disabled=!!b.impossible;
   $("h-adapt").textContent=b.impossible?"Avec toutes ces zones, aucun exercice n’est proposé. Retire une zone, ou vois un professionnel de santé."
@@ -1103,7 +1096,6 @@ $("b-next").onclick=()=>go(S.i+1);
 $("b-prev").onclick=()=>go(S.t>2500?S.i:S.i-1);
 $("b-snd").onclick=()=>{snd=!snd;SND.setMute(!snd);$("b-snd").innerHTML=snd?IC.on:IC.off};
 $("vol").addEventListener("input",()=>{CFG.vol=+$("vol").value;$("vol-o").textContent=CFG.vol+" %";SND.setVol(CFG.vol/100);save()});
-$("b-test").onclick=()=>{if(!SND.init()){return}SND.setVol(CFG.vol/100);SND.setNat(CFG.nat);SND.setMute(false);snd=true;SND.phase("force",6);if(CFG.vx)SND.speak("Bonjour, je suis la voix de ton coach. Prêt ?")};
 $("b-quit").onclick=()=>{
   const b=$("b-quit");
   if(!quitT){quitT=setTimeout(()=>{quitT=0;b.setAttribute("aria-label","Terminer la séance");b.style.removeProperty("background");b.style.removeProperty("color")},3000);
