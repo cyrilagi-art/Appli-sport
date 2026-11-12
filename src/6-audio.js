@@ -1,7 +1,7 @@
 /* ===== Son : ambiances fabriquées par la page + voix du téléphone ===== */
 const SND=(()=>{
 const AC=window.AudioContext||window.webkitAudioContext;
-let ac=null,master=null,bus=null,pb=null,noise=null,pink=null,P=null,timer=0,live=[],volv=.8,muted=false,ducked=false,NAT="ruisseau",vox=null,vq=0;
+let ac=null,master=null,bus=null,pb=null,noise=null,pink=null,P=null,timer=0,live=[],volv=.8,muted=false,ducked=false,NAT="ruisseau",vox=null,vq=0,stuck=0;
 const volg=()=>muted?0:.47*Math.pow(volv,1.6)*(ducked?.35:1);
 function setGain(){if(master)master.gain.setTargetAtTime(volg(),ac.currentTime,.03)}
 function initGraph(){
@@ -23,7 +23,28 @@ function initGraph(){
   const an=ac.createAnalyser();an.fftSize=2048;comp.connect(an);api.an=an;
 }
 function init(){
-  try{if(!ac)ac=new AC();if(!master)initGraph();if(ac.state==="suspended")ac.resume();return true}catch(e){return false}
+  try{
+    if(ac&&ac.state==="closed"){ac=null;master=null}
+    if(!ac)ac=new AC();
+    if(!master)initGraph();
+    if(ac.state!=="running"){const r=ac.resume();r&&r.catch&&r.catch(()=>{})} /* suspendu, ou « interrupted » sur iPhone après un verrouillage, un appel, une notification */
+    return true}catch(e){return false}
+}
+/* Repart d'un contexte audio neuf et d'une synthèse vocale remise à zéro (début de chaque séance). */
+function fresh(){
+  try{clearInterval(timer);timer=0;P=null;pb=null;live=[];const o=ac;ac=null;master=null;bus=null;if(o&&o.close){const r=o.close();r&&r.catch&&r.catch(()=>{})}}catch(e){}
+  try{if("speechSynthesis" in window){speechSynthesis.cancel();speechSynthesis.resume()}}catch(e){}
+  vq++;ducked=false;stuck=0;
+  return init();
+}
+/* Surveillance : le son doit tourner pendant la séance. Renvoie "ok", "wait" ou "rebuilt" (contexte recréé, il faut relancer la phase). */
+function revive(){
+  if(!ac)return"none";
+  try{"speechSynthesis" in window&&speechSynthesis.paused&&speechSynthesis.resume()}catch(e){}
+  if(ac.state==="running"){stuck=0;return"ok"}
+  try{const r=ac.resume();r&&r.catch&&r.catch(()=>{})}catch(e){}
+  if(++stuck>=3){stuck=0;const m=muted;fresh();muted=m;setGain();return"rebuilt"}
+  return"wait";
 }
 /* ===== Instruments ===== */
 function env(g,t,a,peak,dec){
@@ -236,7 +257,7 @@ function speak(text){
   api.last=text;
   if(!hasVoice()||!text)return;
   try{
-    speechSynthesis.cancel();
+    speechSynthesis.cancel();if(speechSynthesis.paused)speechSynthesis.resume();
     const u=new SpeechSynthesisUtterance(text);u.lang="fr-FR";if(vox)u.voice=vox;u.rate=1;u.pitch=1;u.volume=1;
     const my=++vq;
     u.onstart=()=>{ducked=true;setGain()};
@@ -247,7 +268,7 @@ function speak(text){
   }catch(e){}
 }
 function cancel(){vq++;ducked=false;setGain();try{hasVoice()&&speechSynthesis.cancel()}catch(e){}}
-const api={init,phase,stopPhase,beep:ubeep,speak,cancel,hasVoice,last:"",an:null,
+const api={init,fresh,revive,phase,stopPhase,beep:ubeep,speak,cancel,hasVoice,last:"",an:null,
   setVol(v){volv=v;setGain()},
   setMute(m){muted=m;setGain();if(m)cancel()},
   setNat(n){NAT=n},

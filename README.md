@@ -10,7 +10,7 @@ Appli web d'entraînement au poids du corps, **privée et non commerciale**, pen
 - Un profil par membre de la famille (niveau et douleurs mémorisés). Calories estimées pour les adultes seulement (valeurs MET du Compendium of Physical Activities), jamais pour les moins de 18 ans.
 - Variété : chaque profil retient ses 5 dernières séances pour ne pas reproposer toujours les mêmes exercices.
 - Repos entre exercices au choix, ambiances sonores, voix du coach.
-- Fonctionne hors ligne une fois installée.
+- Écran maintenu allumé pendant la séance. Fonctionne hors ligne une fois installée.
 
 ## Données personnelles
 

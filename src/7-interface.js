@@ -1,9 +1,9 @@
 /* ===== Programme et interface ===== */
 const $=id=>document.getElementById(id);
 const LV=[
-  {n:"Débutant",w:30,r:30,t:1.25,g:.75,d:"30 s d’effort, 30 s de repos, rythme posé. Tenues du livre raccourcies."},
-  {n:"Intermédiaire",w:40,r:20,t:1,g:1,d:"40 s d’effort, 20 s de repos. Tenues du livre à 20 s."},
-  {n:"Avancé",w:45,r:15,t:.85,g:1.25,d:"45 s d’effort, 15 s de repos, rythme soutenu. Tenues du livre allongées."}];
+  {n:"Débutant",w:30,r:20,t:1.25,g:.75,d:"30 s d’effort, 20 s de repos, rythme posé. Tenues du livre raccourcies."},
+  {n:"Intermédiaire",w:40,r:15,t:1,g:1,d:"40 s d’effort, 15 s de repos. Tenues du livre à 20 s."},
+  {n:"Avancé",w:45,r:10,t:.85,g:1.25,d:"45 s d’effort, 10 s de repos, rythme soutenu. Tenues du livre allongées."}];
 const FOC=[["full","Corps entier"],["haut","Haut du corps"],["bas","Bas du corps"],["abdos","Abdos & gainage"],["cardio","Cardio"]];
 const POOL={
   full:["squat","pompesg","pompes","g_planche","fentes","boxe","g_cote","mountain","fentearr","g_bassin","jj","planchemd","g_dorsaux","burpees","sqpause","crunch","squatjump","talonsfesses","g_chaise"],
@@ -228,10 +228,34 @@ function voiceFor(st,ex){
 function show(v){["setup","play","done"].forEach(k=>{$("v-"+k).hidden=k!==v});window.scrollTo(0,0)}
 const fmt=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
 function setPauseBtn(){const b=$("b-pause");b.innerHTML=S&&S.pause?IC.play:IC.pause;b.setAttribute("aria-label",S&&S.pause?"Reprendre":"Pause")}
+/* --- écran allumé pendant la séance : Wake Lock, plus une petite vidéo muette en secours (iPhone en appli installée) --- */
+const NOSLEEP="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMqbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlR0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAACAAAAAgAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAAAAABAAAAAAHMbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAQABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABd21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAATdzdGJsAAAAt3N0c2QAAAAAAAAAAQAAAKdhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAACAAIABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAALWF2Y0MBQsAK/+EAFmdCwAraJbARAAADAAEAAAMABA8SJqABAARozg/IAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAFHAAABRwAAAAGHN0dHMAAAAAAAAAAQAAAAIAACAAAAAAFHN0c3MAAAAAAAAAAQAAAAEAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAIAAAABAAAAHHN0c3oAAAAAAAAAAAAAAAIAAAKEAAAACgAAABRzdGNvAAAAAAAAAAEAAANaAAAAYnVkdGEAAABabWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpcmFwcGwAAAAAAAAAAAAAAAAtaWxzdAAAACWpdG9vAAAAHWRhdGEAAAABAAAAAExhdmY2MC4xNi4xMDAAAAAIZnJlZQAAApZtZGF0AAACbAYF//9o3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE2NCByMzEwOCAzMWUxOWY5IC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAyMyAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTAgcmVmPTEgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MToweDExMSBtZT1oZXggc3VibWU9MiBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0wIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MCA4eDhkY3Q9MCBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0wIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTAgd2VpZ2h0cD0wIGtleWludD0yIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTIgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAAEGWIhAU///8PRQABPf8nXXgAAAAGQZogEvLA";
+let nsv=null;
+function keepAwake(){
+  try{if(navigator.wakeLock&&!wake){navigator.wakeLock.request("screen").then(w=>{wake=w;w.addEventListener("release",()=>{if(wake===w)wake=null})}).catch(()=>{})}}catch(e){}
+  try{
+    if(!nsv){nsv=document.createElement("video");nsv.setAttribute("playsinline","");nsv.setAttribute("muted","");nsv.setAttribute("aria-hidden","true");nsv.muted=true;nsv.loop=true;nsv.src=NOSLEEP;
+      nsv.style.cssText="position:fixed;width:2px;height:2px;opacity:.02;pointer-events:none;left:0;bottom:0";document.body.appendChild(nsv)}
+    const p=nsv.play();p&&p.catch&&p.catch(()=>{});
+  }catch(e){}
+}
+function releaseAwake(){
+  try{wake&&wake.release()}catch(e){}wake=null;
+  try{if(nsv){nsv.pause();nsv.remove()}}catch(e){}nsv=null;
+}
+function audioCheck(){
+  if(!S||S.pause)return;
+  const r=SND.revive();
+  if(r==="rebuilt"){const st=B.steps[S.i],ex=EXM[st.ex];SND.setVol(CFG.vol/100);SND.setNat(CFG.nat);SND.setMute(!snd);if(CFG.mu&&snd)SND.phase(akind(st,ex),Math.max(1,st.s-S.t/1000))}
+}
+setInterval(audioCheck,1500);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S){keepAwake();audioCheck()}});
+addEventListener("pageshow",()=>{if(S){keepAwake();audioCheck()}});
+document.addEventListener("pointerdown",()=>{if(S)audioCheck()},true);
 function startRun(){
   if(build(CFG).impossible)return;
-  SND.init();SND.setVol(CFG.vol/100);SND.setNat(CFG.nat);SND.setMute(!snd);
-  try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{wake=w}).catch(()=>{})}catch(e){}
+  snd=true;SND.fresh();SND.setVol(CFG.vol/100);SND.setNat(CFG.nat);SND.setMute(false);
+  keepAwake();
   B=build(CFG);
   {const P=curP();P.hist=[...(P.hist||[]),[...new Set(B.steps.filter(s=>s.k==="effort"||s.k==="stretch").map(s=>s.ex))]].slice(-5);save();SEED=newSeed()}
   S={i:0,t:0,last:performance.now(),pause:false,lb:0,said:{}};
@@ -292,7 +316,7 @@ function finish(full){
   const secs=S?(full?B.total:B.steps[S.i].at+S.t/1000):0,seen=[];
   if(S)B.steps.forEach((s,i)=>{if(s.k!=="rest"&&(full||i<=S.i)&&!seen.includes(s.ex))seen.push(s.ex)});
   const P=curP(),kc=S?kcalOf(P,B.steps,full?B.steps.length:S.i,full?0:S.t/1000):null;
-  cancelAnimationFrame(raf);S=null;SND.stopPhase();SND.cancel();try{wake&&wake.release()}catch(e){}wake=null;
+  cancelAnimationFrame(raf);S=null;SND.stopPhase();SND.cancel();releaseAwake();
   $("app").dataset.phase="effort";
   $("d-stats").innerHTML=`<div class="st"><b>${fmt(secs)}</b><span>temps d’entraînement</span></div><div class="st"><b>${done}</b><span>efforts réalisés sur ${B.efforts}</span></div><div class="st"><b>${seen.length}</b><span>exercices différents</span></div>`;
   $("d-kcal").textContent=minor(P)?"":kcalTxt(P,kc);

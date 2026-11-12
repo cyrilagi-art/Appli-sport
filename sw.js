@@ -1,6 +1,6 @@
 /* Service worker : l'appli fonctionne hors ligne après la première visite.
    Pour publier une nouvelle version, change VERSION (ou laisse le réseau faire : index.html est pris en priorité sur le réseau). */
-const VERSION = "v2";
+const VERSION = "v3";
 const CACHE = "seance-" + VERSION;
 const CORE = ["./", "index.html", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "icons/apple-touch-icon.png"];
 
